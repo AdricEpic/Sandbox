@@ -3,8 +3,8 @@ from collections import namedtuple
 
 Point = namedtuple('Point', ['x', 'y'])
 
-wd = 100
-ht = 100
+wd = 500
+ht = 500
 im = Image.new('RGB', (wd, ht))
 
 def lerp(p1, p2, scale):
@@ -20,10 +20,12 @@ def lerp(p1, p2, scale):
 
 draw = ImageDraw.Draw(im)
 
-p1 = Point(wd/2,0)
-p2 = Point(wd/2, 0)
-c1 = Point(0-wd, ht)
-c2 = Point((wd)*2, ht)
+p1 = Point(0,0)
+p2 = Point(wd-1, ht-1)
+c1 = Point(wd*2, 0)
+c2 = Point(-wd, ht)
+
+points = []
 
 for w in range(0, wd):
     scl = float(w) / wd
@@ -34,7 +36,8 @@ for w in range(0, wd):
     b1 = lerp(a1, a2, scl)
     b2 = lerp(a2, a3, scl)
 
-    pt = lerp(b1, b2, scl)
-    draw.point(pt, (255, 0, 0))
+    points.append(lerp(b1, b2, scl))
+
+draw.line(points, fill=(255,0,0), width=1)
 
 im.save("bezier.png")
