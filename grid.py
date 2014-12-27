@@ -4,7 +4,17 @@ from itertools import izip
 class Grid(object):
     """Simple list wrapper providing grid-like interaction"""
     def __init__(self, dimensions, null_value=None):
-        self.width, self.height = dimensions
+
+        if len(dimensions) == 2:
+            self.width, self.height = dimensions
+        else:
+            raise ValueError("Incorrect number of dimensions provided")
+
+        if not (isinstance(self.width, int) and isinstance(self.height, int)):
+            raise ValueError("Grid dimensions must be integers.")
+        elif (self.width <= 0) or (self.height <= 0):
+            raise ValueError("Grid dimensions must be non-zero and positive.")
+
         self.maxX = self.width - 1
         self.maxY = self.height - 1
         self._array = [null_value] * (self.width * self.height)
@@ -34,23 +44,3 @@ class Grid(object):
     def columns(self):
         """Return list of contents tupkes grouped by column"""
         return list(izip(*self.rows()))
-
-
-if __name__ == '__main__':
-    test = Grid((2, 4))
-    test[(0, 0)] = "Test"
-    test[(1, 1)] = "Herp"
-    test[(0, 2)] = "Foo"
-    test[(test.maxX, test.maxY)] = "End"
-
-    # print test[(0,0)]
-    for row in test.rows():
-        print row
-    print
-    for column in test.columns():
-        print column
-    print
-    print test.rows()[0]
-
-    # Test exception when assigning out of bounds
-    # test[(4,5)] = "WRONG"
