@@ -5,16 +5,24 @@ import math
 # ToDo: Decrease growth
 
 class Branch(object):
-    length_rate = 5
-    width_rate = 0.135
-    branch_rotation_min = 15
-    branch_rotation_max = 35
-    branch_wobble = 15
-    branch_rate_base = 0.01
-    branch_rate_max = 0.2
-    branch_rate_growth = 0.01
+    # Rotation parameters
+    branch_rotation_min = 10
+    branch_rotation_max = 45
+    branch_wobble = 12  # Degrees trunk rotation can vary. This must be an int b/c of randrange.
 
-    def __init__(self, parent=None, root_location=None, rotation=None):
+    # Branching parameters
+    min_branching_width = 0.75
+    branch_rate_base = 0.01
+    branch_rate_max = 0.175
+    branch_rate_growth = 0.01  # Add to branching chance on unsuccessful branch
+
+    # Growth parameters
+    trunk_transfer = 0.5  # Percent of trunk width carried over when spawning new trunk segment
+    growth_scale = 0.915  # Percent of growth rate to propogate to child segments
+    length_rate = 5  # Length units to add per growth
+    width_rate = 0.15  # Width units to add per growth
+
+    def __init__(self, parent=None, root_location=None, rotation=None, width=None):
 
         self._root_location = root_location if root_location else (0, 0)
 
@@ -22,28 +30,30 @@ class Branch(object):
         self.trunk = None
         self.child = None
         self.length = 0
-        self.width = 0
+        self.width = width if width is not None else 0
         self.age = 0
         self.branch_chance = self.branch_rate_base
         self.rotation = rotation if rotation is not None else -90
 
         self.grow()
 
-    def grow(self):
+    def grow(self, scale=1):
         """Incremental growth iteration"""
-        self.width += self.width_rate
+        self.width += self.width_rate * scale
         if self.trunk is None:
-            self.length += self.length_rate
-            if random.random() < self.branch_chance:
-                self.trunk = Branch(parent=self, rotation=random.randrange(-1 * self.branch_wobble, self.branch_wobble))
-                self.child = Branch(parent=self, rotation=math.copysign(random.randrange(self.branch_rotation_min,
-                                                                                         self.branch_rotation_max),
-                                                                        random.randrange(-1, 1)))
-            else:
-                self.branch_chance += (self.branch_chance < self.branch_rate_max) * self.branch_rate_growth
+            self.length += self.length_rate * scale
+            if self.width > self.min_branching_width:  # Don't start branching till min width reached
+                if random.random() < self.branch_chance:
+                    self.trunk = Branch(parent=self, width=self.width*self.trunk_transfer,
+                                        rotation=random.randrange(-1 * self.branch_wobble, self.branch_wobble))
+                    self.child = Branch(parent=self, rotation=math.copysign(random.randrange(self.branch_rotation_min,
+                                                                                             self.branch_rotation_max),
+                                                                            random.randrange(-1, 1)))
+                else:
+                    self.branch_chance += (self.branch_chance < self.branch_rate_max) * self.branch_rate_growth
         else:
-            self.trunk.grow()
-            self.child.grow()
+            self.trunk.grow(scale=scale*self.growth_scale)
+            self.child.grow(scale=scale*self.growth_scale)
         self.age += 1
 
     def angle(self):
@@ -89,7 +99,7 @@ if __name__ == "__main__":
     test = Branch(root_location=(img_dims[0] / 2, img_dims[1]))
     test.rotation += math.copysign(random.randrange(-1 * (test.branch_wobble / 4), test.branch_wobble / 4),
                                    random.randrange(-1, 1))
-    for i in range(75):
+    for i in range(100):
         test.grow()
     for seg in test.segments():
         print seg.angle()
